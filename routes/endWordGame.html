@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>끝말잇기 좀 해봐 쫌</title>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap"
+        rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/7f795942b0.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            margin: 0;
+            text-align: center;
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #eee;
+        }
+
+        input#inputValue {
+            border-radius: 10px;
+            padding: 7px 10px 7px 10px;
+            background: rgb(245, 245, 245);
+        }
+
+        input#inputValue::placeholder {
+            font-family: 'Noto Sans KR', sans-serif;
+            text-align: center;
+            font-size: 13px;
+            color: black;
+        }
+
+        input#submit {
+            font-family: 'FontAwesome';
+            background-color: yellow;
+            padding: 7px 10px 7px 10px;
+            margin-top: 10px;
+            border-radius: 10px;
+        }
+
+        div#game1 {
+            width: 15em;
+            background: #eee;
+            border-radius: 7px;
+            margin: auto;
+            margin-bottom: 10px;
+        }
+
+        h5 {
+            padding: 7px 10px;
+        }
+
+        div.inputs {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 10px;
+            border: solid black;
+            padding:  80px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(19, 19, 19, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        div.inputs p {
+            position: absolute;
+            top: 0;
+            right: 5px;
+            margin: 0;
+            font-size: 5px;
+        }
+
+        h2 {
+            font-family: 'FontAwesome';
+        }
+
+        @media only screen and (max-width: 780px) {
+            #inputValue {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="inputs">
+        <p id='x' style="position: absolute;font-weight:bold;">×</p>
+        <div class="items">
+            <h2 id='winme' style='margin-bottom:10px;margin-top: 0;'>&#xf682 나를 이겨볼래?</h2>
+            <div id='game1'>
+                <h5 id='game' style='margin: 7px'></h5>
+            </div>
+            <form id='form'>
+                <input id="inputValue" type="text" placeholder="단어를 입력하세요!" required>
+                <input id="submit" type="submit" value='&#xf075'>
+            </form>
+        </div>
+    </div>
+    <input type="range" id="difficulty" value="30" min="0" max="100" step="0.1" style="transform: translate(-50%, -50%);color:rgba(38, 38, 110, 0.451);position: absolute;top: 86%;left: 50%;font-size: 24px;">
+    <h5 id="difficultyText" style="transform: translate(-50%, -50%);color:rgba(38, 38, 110, 0.451);position: absolute;top: 86%;left: 50%;font-size: 24px;">상위 30% 끝잇봇</h5>
+    <ins class="kakao_ad_area" style="display:none;" 
+        data-ad-unit    = "DAN-GT8vTVgVPnLo76Vz" 
+        data-ad-width   = "320" 
+        data-ad-height  = "50"></ins> 
+<script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+    <script>
+        let difficulty = location.href.includes("?difficulty=")?Number(location.href.split("difficulty=")[1]):30
+        let words = [];
+        let lastWord = "";
+
+        $('#difficulty[type=range]').attr("value",difficulty)
+        $("#difficultyText")[0].innerText = '상위 '+(difficulty)+'% 끝잇봇'
+
+        $('#inputValue').on('click', function () {
+            $(this).attr('placeholder', '');
+        })
+
+        $('#x').on('click', function () {
+            document.getElementById('winme').textContent = '어딜 도망가 ㅋㅋㅋ';
+        });
+
+        $('#difficulty[type=range]').change(function () {
+            console.log(1)
+            $("#difficultyText")[0].innerText = '상위 '+(this.value)+'% 끝잇봇'
+            difficulty = Number(this.value)
+        });
+
+        $('#game1').hide();
+
+        const form = document.getElementById('form');
+
+        submitEv = (event) => {
+            event.preventDefault();
+            submit(document.getElementById('inputValue').value);
+            document.getElementById('inputValue').value = '';
+        }
+
+        submit = (str) => {
+            if (str.startsWith(lastWord) || lastWord.includes('(') && str.startsWith(lastWord.split('(')[0].slice(-
+                    1)) || lastWord.includes('(') && str.startsWith(lastWord.split(')')[0].slice(-1))) {
+                if (words.indexOf(str) == -1) {
+                    $.ajax({
+                        url: '/api/word/exist?word=' + encodeURIComponent(str),
+                        success: function (data) {
+                            if (data == "true") {
+                                addText(str);
+                                lastWord = str.slice(-1);
+                                $.ajax({
+                                    url: '/api/word/advanced?word=' + encodeURIComponent(
+                                        lastWord) + '&bans=' + words.join(','),
+                                    success: function (data) {
+                                        if (data.status) {
+                                            if (data.data.count != 0) {
+                                                let difficultyInt = Math.floor((data.data.count-1) * (difficulty/100))
+                                                let pick = data.data.wordList[difficultyInt];
+                                                let doumed = doum(pick.slice(-1));
+                                                console.log(doumed);
+                                                if (doumed != pick.slice(-1)) {
+                                                    addText(pick + "(" + doumed + ")");
+                                                    lastWord = pick.slice(-1) + "(" +
+                                                        doumed + ")";
+                                                    $.ajax({
+                                                        url: '/api/word/advanced?word=' +
+                                                            encodeURIComponent(pick
+                                                                .slice(-1)) +
+                                                            '&bans=' + words.join(
+                                                                ','),
+                                                        success: function (data) {
+                                                            if (data.data
+                                                                .count == 0) {
+                                                                    setTimeout(() => {
+                                                                        alert('제 승리입니다 :)');
+                                                                        location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
+                                                                    }, 300);
+                                                            } else {
+                                                                $.ajax({
+                                                                    url: '/api/word/advanced?word=' +
+                                                                        encodeURIComponent(
+                                                                            doumed
+                                                                        ) +
+                                                                        '&bans=' +
+                                                                        words
+                                                                        .join(
+                                                                            ','
+                                                                        ),
+                                                                    success: function (
+                                                                        data
+                                                                    ) {
+                                                                        if (data
+                                                                            .data
+                                                                            .count ==
+                                                                            0
+                                                                        ) {
+                                                                            
+                                                                        setTimeout(() => {
+                                                                            alert('제 승리입니다 :)');
+                                                                            location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
+                                                                        }, 300);
+                                                                        }
+                                                                    }
+                                                                });
+                                                            }
+                                                        }
+                                                    });
+                                                } else {
+                                                    addText(pick);
+                                                    lastWord = pick.slice(-1);
+                                                    $.ajax({
+                                                        url: '/api/word/advanced?word=' +
+                                                            encodeURIComponent(
+                                                                lastWord) +
+                                                            '&bans=' + words.join(
+                                                                ','),
+                                                        success: function (data) {
+                                                            if (data.data
+                                                                .count == 0) {
+
+                                                                    setTimeout(() => {
+                                                                        alert('제 승리입니다 :)');
+                                                                        location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
+                                                                    }, 300);
+                                                            }
+                                                        }
+                                                    });
+                                                }
+
+                                            } else {
+                                                if(words.length==1){
+                                                    alert('제 패배긴한데,, 처음부터 한방단어라니ㅠㅠ 너무해요..');
+                                                }else{
+                                                    alert('제 패배네요 :)');
+                                                }
+                                                location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
+                                            }
+                                        } else {
+                                            alert('오류가 발생했어요ㅠ');
+                                        }
+                                    }
+                                });
+                            } else {
+                                alert('사용할 수 없는 단어입니다!');
+                            }
+                        }
+                    })
+                } else {
+                    alert('이미 사용한 단어입니다!');
+                }
+            } else {
+                alert(lastWord + '로 시작하는 단어여야합니다!');
+            }
+        };
+        addText = (str) => {
+            $('#game1').show();
+            words.push(str);
+            document.getElementById('game').innerHTML = '[  ' + words.join(" > ") + '  ]';
+        };
+        doum = (str) => {
+            let result = "";
+            $.ajax({
+                url: "/api/word/doum?word=" + encodeURIComponent(str),
+                async: false,
+                success: function (data) {
+                    result = data.data.result;
+                }
+            })
+            return result;
+        }
+
+        form.addEventListener('submit', submitEv);
+    </script>
+</body>
+
+</html>
