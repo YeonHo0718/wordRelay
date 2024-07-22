@@ -51,8 +51,7 @@ for(var i=0;i<words.length;i++){
 }*/
 
 getWords = (word,banss) => {
-   
-    if(!fs.existsSync('../test/DB/individual/'+word.slice(-1)+'.json')){
+    if(!fs.existsSync(process.cwd()+'/DB/individual/'+word.slice(-1)+'.json')){
         return [];
     }else{
         const alll = require('../DB/individual/'+word.slice(-1)+'.json');
@@ -67,6 +66,7 @@ getWords = (word,banss) => {
 //console.log(getWords('역',undefined))
 
 router.get('/advanced', (req, res) => {
+
     const result = {
         status: false,
         data: {}
@@ -84,7 +84,7 @@ router.get('/advanced', (req, res) => {
 
         const lastWord = word.slice(-1);
 
-        if(fs.existsSync('../test/DB/individual/'+lastWord+'.json')) {
+        if(fs.existsSync(process.cwd()+'/DB/individual/'+lastWord+'.json')) {
 
             let all = getWords(lastWord, bans);
             let more;
