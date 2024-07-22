@@ -6,7 +6,7 @@ const phonetics = Object.keys(phonetic);
 const cjj = require('../DB/cjj.js');
 const fs = require('fs');
 const axios = require('axios');
-const dir = __dirname.replace('/routes','');
+const dir = __dirname.replace('/routes','').replace('\\routes','');
 
 /*
 let test = phonetics.map(e=>phonetic[e]);
