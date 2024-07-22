@@ -1,5 +1,5 @@
 const router = require('express').Router();
-//const wordDB = require('../DB/wordDB.json');
+const wordDB = require('../DB/wordDB.json');
 const words = require('../DB/words.json');
 const phonetic = require('../DB/phonetic.json');
 const phonetics = Object.keys(phonetic);
@@ -64,10 +64,18 @@ getWords = (word,banss) => {
     }
 }
 
+getMeaning = (word) =>{
+    let meanings = wordDB[word]
+    if(meanings){
+        return meanings
+    }
+    return []
+}
+
 //console.log(getWords('역',undefined))
 
 router.get('/advanced', (req, res) => {
-console.log(dir)
+// console.log(dir)
     const result = {
         status: false,
         data: {}
@@ -292,6 +300,24 @@ router.get('/exist',function(req,res){
         }
     }
 })
+
+router.get('/meaning',function(req,res){
+    let word = req.query.word;
+	let result = {status:false,data:{}};
+    if(word==undefined){
+        result.e = "인자 word가 빠졌습니다!";
+        res.json(result);
+    }else{
+        try{
+            result.data.result = getMeaning(word);
+            result.status = true;
+            res.json(result);
+        }catch(e){
+            result.e = e;
+            res.json(e);
+        }
+    }
+});
 
 
 module.exports = router;
