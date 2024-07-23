@@ -165,15 +165,57 @@ router.get('/advanced', (req, res) => {
     }
 });
 
-router.get('/moreVanced',function(req,res){
+router.get('/moreVanced',async function(req,res){
     const result = {
         status: false,
         data: {}
     };
+    let startTime = new Date().getTime()
     const word = req.query.word;
     const doum = req.query.doum;
     const bans = req.query.bans != undefined? req.query.bans.replace(/ /g,'').split(',') : undefined;
-    axios.get(`http://localhost:3000/api/word/advanced?word={}`)
+    if(word == undefined) {
+        res.json({
+            ...result,
+            e: "인자 word가 빠졌습니다!"
+        });
+        return;
+    } 
+    const e = await axios.get(`http://localhost:8001/api/word/advanced?word=${word}`)
+    const data = e.data
+    let words = data.data.words
+    for(let i of words){
+        let arr_ = getWords(i.word.slice(-1),bans)
+        let arr = arr_.map(a=>{
+            const now_slice = a.slice(-1)
+            if(phonetics.includes(now_slice)){
+                return getWords(phonetic[now_slice],bans).length + getWords(now_slice,bans).length
+            }
+            return getWords(now_slice,bans).length
+        })
+        if(phonetics.includes(i.word.slice(-1))){
+            let arr2_ = getWords(phonetic[i.word.slice(-1)],bans)
+            let arr2 = arr2_.map(a=>{
+                const now_slice = a.slice(-1)
+                if(phonetics.includes(now_slice)){
+                    return getWords(phonetic[now_slice],bans).length + getWords(now_slice,bans).length
+                }
+                return getWords(now_slice,bans).length
+            })
+            arr = arr.concat(arr2)
+            arr_ = arr_.concat(arr2_)
+        }
+        const count = arr.concat([]).sort((a,b)=>a-b)[0]
+        const point = (count==undefined?10000:(count/i.reacts))
+        if(count != undefined){
+            i.strongWord = arr_[arr.indexOf(count)]
+        }
+        i.point = point
+    }
+    data.data.words = data.data.words.sort((a,b)=>b.point-a.point)
+    data.data.wordList = (data.data.words).map(a=>a.word)
+    res.json(data)
+    console.log(word+" / "+(new Date().getTime()-startTime)+"ms")
 })
 
 router.get('/startsWith',function(req,res){
@@ -189,7 +231,11 @@ router.get('/startsWith',function(req,res){
         result.e = "인자 word가 빠졌습니다!";
         res.json(result);
     }else{
-        result.data.words = words.filter(e=>e.startsWith(word)&&bans.indexOf(e)==-1);    
+        if(phonetics.includes(word.slice(-1))) {
+            result.data.words = words.filter(e=>(e.startsWith(word)||e.startsWith(phonetic[word.slice(-1)]))&&bans.indexOf(e)==-1);   
+        }else{
+            result.data.words = words.filter(e=>e.startsWith(word)&&bans.indexOf(e)==-1);   
+        }
         result.data.count = result.data.words.length;
         result.status = true;
         res.json(result);
