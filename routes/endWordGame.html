@@ -198,6 +198,8 @@
         let difficulty = location.href.includes("?difficulty=")?Number(location.href.split("difficulty=")[1]):30
         let words = [];
         let lastWord = "";
+        let timerStart = false;
+        let timer;
 
         $('#difficulty[type=range]').attr("value",difficulty)
         $("#difficultyText")[0].innerText = '상위 '+(difficulty)+'% 끝잇봇'
@@ -220,11 +222,43 @@
 
         const form = document.getElementById('form');
 
+        timerReset = () => {
+            if(timerStart){
+                time = 10
+            }else{
+                timerStart = true
+                time = 10
+                timer = setInterval(()=>{
+                    if(!$("#winme")[0].innerText.includes("나를")){
+                        clearInterval(timer)
+                        return;
+                    }
+                    time--;
+                    if(time < 0){
+                        clearInterval(timer)
+                        gameoverFnc("LOSE","TIME OUT","시간초과 :D")
+                    }else{
+                        $("#winme")[0].innerText = $("#winme")[0].innerText.split("?")[0]+"? "+ time
+                    }
+                },1000)
+            }
+        }
+
+        timerClear = () => clearInterval(timer)
+
+        gameoverFnc = (type, title, msg) => {
+            $(".inputs")[0].style.animation = type==="LOSE"?'fadeInUp 1.5s':'moveAround 0.7s';
+            $("#winme")[0].innerText = title
+            $("#winme")[0].style.color = (type==="LOSE"?"red":"blue")
+            $("#inputValue").hide()
+            $("#submit")[0].outerHTML =  `<input id="submit" type="submit" style="color:white;" value='&#xf01e  ${msg}'>`
+            $("#submit")[0].style.backgroundColor = (type==="LOSE"?"red":"blue")
+        }
+
         submitEv = (event) => {
             event.preventDefault();
             submit(document.getElementById('inputValue').value);
             document.getElementById('inputValue').value = '';
-            
         }
 
         submit = (str) => {
@@ -283,33 +317,19 @@
                                 }
                                 if(gameover && botWin){
                                     setTimeout(() => {
-                                        $(".inputs")[0].style.animation = 'fadeInUp 1.5s';
-                                        $("#winme")[0].innerText = "DEFEATED."
-                                        $("#winme")[0].style.color = "red"
-                                        $("#inputValue").hide()
-                                        $("#submit")[0].outerHTML =  `<input id="submit" type="submit" style="color:white;" value='&#xf01e  제 승리입니다 :)'>`
-                                        $("#submit")[0].style.backgroundColor = "red"
+                                       gameoverFnc("LOSE","DEFEATED","제 승리입니다 :)")
                                         //location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
                                     }, 300);
+                                }else{
+                                    timerReset()
                                 }
                             } else {
                                 gameover = true
                                 botLose = true
                                 if(words.length==1){
-                                    $(".inputs")[0].style.animation = 'moveAround 0.7s';
-                                    $("#winme")[0].innerText = "VICTORY!"
-                                    $("#winme")[0].style.color = "blue"
-                                    $("#inputValue").hide()
-                                    $("#submit")[0].outerHTML =  `<input id="submit" type="submit" style="color:white;" value='&#xf01e  제 패배긴한데,,\n치사해요!!ㅜ'>`
-                                    $("#submit")[0].style.backgroundColor = "blue"
+                                    gameoverFnc("WIN","VICTORY!","제 패배긴한데,,\n치사해요!!ㅜ")
                                 }else{
-                                    $(".inputs")[0].style.animation = 'moveAround 0.7s';
-                                    $("#winme")[0].innerText = "VICTORY!"
-                                    $("#winme")[0].style.color = "blue"
-                                    $("#inputValue").hide()
-                                    $("#submit")[0].outerHTML =  `<input id="submit" type="submit" style="color:white;" value='&#xf01e  제 패배네요 ;)'>`
-                                    $("#submit")[0].style.backgroundColor = "blue"
-                                    
+                                    gameoverFnc("WIN","VICTORY!","제 패배네요 ;)")
                                     //alert('제 패배네요 ;)');
                                 }
                                 //location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
