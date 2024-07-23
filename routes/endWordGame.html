@@ -141,109 +141,64 @@
             if (str.startsWith(lastWord) || lastWord.includes('(') && str.startsWith(lastWord.split('(')[0].slice(-
                     1)) || lastWord.includes('(') && str.startsWith(lastWord.split(')')[0].slice(-1))) {
                 if (words.indexOf(str) == -1) {
-                    $.ajax({
-                        url: '/api/word/exist?word=' + encodeURIComponent(str),
-                        success: function (data) {
-                            if (data == "true") {
-                                addText(str);
-                                lastWord = str.slice(-1);
-                                $.ajax({
-                                    url: '/api/word/advanced?word=' + encodeURIComponent(
-                                        lastWord) + '&bans=' + words.join(','),
-                                    success: function (data) {
-                                        if (data.status) {
-                                            if (data.data.count != 0) {
-                                                let difficultyInt = Math.floor((data.data.count-1) * (difficulty/100))
-                                                let pick = data.data.wordList[difficultyInt];
-                                                let doumed = doum(pick.slice(-1));
-                                                console.log(doumed);
-                                                if (doumed != pick.slice(-1)) {
-                                                    addText(pick + "(" + doumed + ")");
-                                                    lastWord = pick.slice(-1) + "(" +
-                                                        doumed + ")";
-                                                    $.ajax({
-                                                        url: '/api/word/advanced?word=' +
-                                                            encodeURIComponent(pick
-                                                                .slice(-1)) +
-                                                            '&bans=' + words.join(
-                                                                ','),
-                                                        success: function (data) {
-                                                            if (data.data
-                                                                .count == 0) {
-                                                                    setTimeout(() => {
-                                                                        alert('제 승리입니다 :)');
-                                                                        location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
-                                                                    }, 300);
-                                                            } else {
-                                                                $.ajax({
-                                                                    url: '/api/word/advanced?word=' +
-                                                                        encodeURIComponent(
-                                                                            doumed
-                                                                        ) +
-                                                                        '&bans=' +
-                                                                        words
-                                                                        .join(
-                                                                            ','
-                                                                        ),
-                                                                    success: function (
-                                                                        data
-                                                                    ) {
-                                                                        if (data
-                                                                            .data
-                                                                            .count ==
-                                                                            0
-                                                                        ) {
-                                                                            
-                                                                        setTimeout(() => {
-                                                                            alert('제 승리입니다 :)');
-                                                                            location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
-                                                                        }, 300);
-                                                                        }
-                                                                    }
-                                                                });
-                                                            }
-                                                        }
-                                                    });
-                                                } else {
-                                                    addText(pick);
-                                                    lastWord = pick.slice(-1);
-                                                    $.ajax({
-                                                        url: '/api/word/advanced?word=' +
-                                                            encodeURIComponent(
-                                                                lastWord) +
-                                                            '&bans=' + words.join(
-                                                                ','),
-                                                        success: function (data) {
-                                                            if (data.data
-                                                                .count == 0) {
-
-                                                                    setTimeout(() => {
-                                                                        alert('제 승리입니다 :)');
-                                                                        location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
-                                                                    }, 300);
-                                                            }
-                                                        }
-                                                    });
-                                                }
-
-                                            } else {
-                                                if(words.length==1){
-                                                    alert('제 패배긴한데,, 처음부터 한방단어라니ㅠㅠ 너무해요..');
-                                                }else{
-                                                    alert('제 패배네요 :)');
-                                                }
-                                                location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
-                                            }
-                                        } else {
-                                            alert('오류가 발생했어요ㅠ');
+                    let exist = existingWord(str)
+                    if(exist){
+                        addText(str);
+                        lastWord = str.slice(-1);
+                        let advancedData = advancedWord(lastWord,words)
+                        let gameover = false
+                        let botWin = false
+                        let botLose = false
+                        if (advancedData.status) {
+                            if (advancedData.data.count != 0) {
+                                let difficultyInt = Math.floor((advancedData.data.count-1) * (difficulty/100))
+                                let pick = advancedData.data.wordList[difficultyInt];
+                                let doumed = doum(pick.slice(-1));
+                                if (doumed != pick.slice(-1)) {
+                                    addText(pick + "(" + doumed + ")");
+                                    lastWord = pick.slice(-1) + "(" +doumed + ")";
+                                    let data = advancedWord(pick.slice(-1),words)
+                                    if (data.data.count == 0) {
+                                        gameover = true
+                                        botWin = true
+                                    } else {
+                                        data = advancedWord(doumed,words)
+                                        if (data.data.count == 0) {
+                                            gameover = true
+                                            botWin = true
                                         }
                                     }
-                                });
+                                } else {
+                                    addText(pick);
+                                    lastWord = pick.slice(-1);
+                                    let data = advancedWord(lastWord,words)
+                                    if (data.data.count == 0) {
+                                        gameover = true
+                                        botWin = true
+                                    }
+                                }
+                                if(gameover && botWin){
+                                    setTimeout(() => {
+                                        alert('제 승리입니다 :)');
+                                        location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
+                                    }, 300);
+                                }
                             } else {
-                                alert('사용할 수 없는 단어입니다!');
+                                gameover = true
+                                botLose = true
+                                if(words.length==1){
+                                    alert('제 패배긴한데,, 처음부터 한방단어라니ㅠㅠ 너무해요..');
+                                }else{
+                                    alert('제 패배네요 ;)');
+                                }
+                                location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
                             }
+                        } else {
+                            alert('통신오류가 발생했어요ㅠ');
                         }
-                    })
+                    } else {
+                        alert('사용할 수 없는 단어입니다!');
+                    }
                 } else {
                     alert('이미 사용한 단어입니다!');
                 }
@@ -266,6 +221,28 @@
                 }
             })
             return result;
+        }
+        advancedWord = (str,bans) => {
+            let result = {};
+            $.ajax({
+                url: "/api/word/advanced?word=" + encodeURIComponent(str)+"&bans="+encodeURIComponent(bans.join(',')),
+                async: false,
+                success: function (data) {
+                    result = data;
+                }
+            })
+            return result;
+        }
+        existingWord = (str) => {
+            let result = {};
+            $.ajax({
+                url: "/api/word/exist?word=" + encodeURIComponent(str),
+                async: false,
+                success: function (data) {
+                    result = data;
+                }
+            })
+            return result == 'true';
         }
 
         form.addEventListener('submit', submitEv);
