@@ -57,9 +57,10 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+	        animation: fadeInUpDown 0.7s;
             border-radius: 10px;
             border: solid black;
-            padding:  80px;
+            padding:  5% 10%;
             background: white;
             box-shadow: 0 4px 6px rgba(19, 19, 19, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
         }
@@ -76,10 +77,98 @@
             font-family: 'FontAwesome';
         }
 
+        h2#winme {
+            font-size: 130%;
+        }
+
         @media only screen and (max-width: 780px) {
             #inputValue {
                 padding: 0;
             }
+        }
+        
+        @keyframes fadeInUpDown {
+	        0% {
+		        opacity: 0;
+		        transform: translate(-50%, -30%);
+	        }
+            50% {
+		        opacity: 0.5;
+		        transform: translate(-50%, -60%);
+	        }
+	        to {
+		        opacity: 1;
+		        transform: translate(-50%, -50%);
+	        }
+        }
+
+        @keyframes fadeInUp {
+	        0% {
+		        opacity: 0;
+		        transform: translate(-50%, -30%);
+	        }
+	        to {
+		        opacity: 1;
+		        transform: translate(-50%, -50%);
+	        }
+        }
+
+        @keyframes fadeOutDown {
+	        0% {
+		        opacity: 1;
+		        transform: translate(-50%, -50%);
+	        }
+	        to {
+		        opacity: 0;
+		        transform: translate(-50%, 1000%);
+	        }
+        }
+
+        @keyframes moveAround {
+	        0% {
+		        opacity: 1;
+		        transform: translate(-50%, -50%);
+	        }
+	        14% {
+		        opacity: 0;
+		        transform: translate(-50%, 0%);
+	        }
+	        28% {
+		        opacity: 0;
+		        transform: translate(-50%, -200%);
+	        }
+	        40% {
+		        opacity: 0.5;
+		        transform: translate(-50%, 0%);
+	        }
+	        41% {
+		        opacity: 0;
+		        transform: translate(-50%, 0%);
+	        }
+	        56% {
+		        opacity: 0;
+		        transform: translate(-50%, -200%);
+	        }
+            70% {
+		        opacity: 0.5;
+		        transform: translate(-50%, 0%);
+	        }
+            71% {
+		        opacity: 0;
+		        transform: translate(-50%, 0%);
+	        }
+            72% {
+                opacity: 0;
+                transform: translate(-50%,-200%);
+            }
+            80% {
+                opacity: 0.8;
+                transform: translate(-50%,-20%);
+            }
+	        100% {
+		        opacity: 1;
+		        transform: translate(-50%, -50%);
+	        }              
         }
     </style>
 </head>
@@ -92,14 +181,14 @@
             <div id='game1'>
                 <h5 id='game' style='margin: 7px'></h5>
             </div>
-            <form id='form'>
+            <form id='form' novalidate>
                 <input id="inputValue" type="text" placeholder="단어를 입력하세요!" required>
                 <input id="submit" type="submit" value='&#xf075'>
             </form>
         </div>
     </div>
-    <input type="range" id="difficulty" value="30" min="0" max="100" step="0.1" style="transform: translate(-50%, -50%);color:rgba(38, 38, 110, 0.451);position: absolute;top: 86%;left: 50%;font-size: 24px;">
-    <h5 id="difficultyText" style="transform: translate(-50%, -50%);color:rgba(38, 38, 110, 0.451);position: absolute;top: 86%;left: 50%;font-size: 24px;">상위 30% 끝잇봇</h5>
+    <input type="range" id="difficulty" value="30" min="0" max="100" step="0.1" style="animation: fadeInUp 0.35s;transform: translate(-50%, -50%);color:rgba(38, 38, 110, 0.451);position: absolute;top: 86%;left: 50%;font-size: 24px;">
+    <h5 id="difficultyText" style="animation: fadeInUp 0.35s;transform: translate(-50%, -50%);color:rgba(38, 38, 110, 0.451);position: absolute;top: 86%;left: 50%;font-size: 24px;">상위 30% 끝잇봇</h5>
     <ins class="kakao_ad_area" style="display:none;" 
         data-ad-unit    = "DAN-GT8vTVgVPnLo76Vz" 
         data-ad-width   = "320" 
@@ -135,14 +224,29 @@
             event.preventDefault();
             submit(document.getElementById('inputValue').value);
             document.getElementById('inputValue').value = '';
+            
         }
 
         submit = (str) => {
+            if(document.getElementById('inputValue').style.display === "none"){
+                location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
+                return;
+            }
             if (str.startsWith(lastWord) || lastWord.includes('(') && str.startsWith(lastWord.split('(')[0].slice(-
                     1)) || lastWord.includes('(') && str.startsWith(lastWord.split(')')[0].slice(-1))) {
                 if (words.indexOf(str) == -1) {
                     let exist = existingWord(str)
                     if(exist){
+                        if($("#difficultyText")[0].style.transform != 'translate(-50%,100%)'){
+                            $("#difficultyText")[0].style.animation = 'fadeOutDown 0.7s';
+                            $("#difficultyText")[0].style.transform = 'translate(-50%,100%)';
+                            $("#difficulty")[0].style.animation = 'fadeOutDown 0.7s';
+                            $("#difficulty")[0].style.transform = 'translate(-50%,1000%)';
+                            setTimeout(() => {
+                                $("#difficulty").hide()
+                                $("#difficultyText").hide()
+                            }, 3000);
+                        }
                         addText(str);
                         lastWord = str.slice(-1);
                         let advancedData = advancedWord(lastWord,words)
@@ -179,19 +283,36 @@
                                 }
                                 if(gameover && botWin){
                                     setTimeout(() => {
-                                        alert('제 승리입니다 :)');
-                                        location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
+                                        $(".inputs")[0].style.animation = 'fadeInUp 1.5s';
+                                        $("#winme")[0].innerText = "DEFEATED."
+                                        $("#winme")[0].style.color = "red"
+                                        $("#inputValue").hide()
+                                        $("#submit")[0].outerHTML =  `<input id="submit" type="submit" style="color:white;" value='&#xf01e  제 승리입니다 :)'>`
+                                        $("#submit")[0].style.backgroundColor = "red"
+                                        //location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
                                     }, 300);
                                 }
                             } else {
                                 gameover = true
                                 botLose = true
                                 if(words.length==1){
-                                    alert('제 패배긴한데,, 처음부터 한방단어라니ㅠㅠ 너무해요..');
+                                    $(".inputs")[0].style.animation = 'moveAround 0.7s';
+                                    $("#winme")[0].innerText = "VICTORY!"
+                                    $("#winme")[0].style.color = "blue"
+                                    $("#inputValue").hide()
+                                    $("#submit")[0].outerHTML =  `<input id="submit" type="submit" style="color:white;" value='&#xf01e  제 패배긴한데,,\n치사해요!!ㅜ'>`
+                                    $("#submit")[0].style.backgroundColor = "blue"
                                 }else{
-                                    alert('제 패배네요 ;)');
+                                    $(".inputs")[0].style.animation = 'moveAround 0.7s';
+                                    $("#winme")[0].innerText = "VICTORY!"
+                                    $("#winme")[0].style.color = "blue"
+                                    $("#inputValue").hide()
+                                    $("#submit")[0].outerHTML =  `<input id="submit" type="submit" style="color:white;" value='&#xf01e  제 패배네요 ;)'>`
+                                    $("#submit")[0].style.backgroundColor = "blue"
+                                    
+                                    //alert('제 패배네요 ;)');
                                 }
-                                location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
+                                //location.href = location.href.split("?")[0]+"?difficulty="+difficulty;
                             }
                         } else {
                             alert('통신오류가 발생했어요ㅠ');
