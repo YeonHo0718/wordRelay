@@ -102,6 +102,21 @@
 	        }
         }
 
+        @keyframes tada {
+	        0% {
+		        transform: translate(-50%, -50%) scale(1);
+	        }
+            50% {
+                transform: translate(-50%, -50%) scale(0.5);
+	        }
+            75% {
+                transform: translate(-50%, -50%) scale(1.8);
+	        }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+	        }
+        }
+
         @keyframes fadeInUp {
 	        0% {
 		        opacity: 0;
@@ -247,7 +262,7 @@
         timerClear = () => clearInterval(timer)
 
         gameoverFnc = (type, title, msg) => {
-            $(".inputs")[0].style.animation = type==="LOSE"?'fadeInUp 1.5s':'moveAround 0.7s';
+            $(".inputs")[0].style.animation = type==="LOSE"?'fadeInUp 1.5s':'tada 0.7s';
             $("#winme")[0].innerText = title
             $("#winme")[0].style.color = (type==="LOSE"?"red":"blue")
             $("#inputValue").hide()
@@ -295,12 +310,12 @@
                                 if (doumed != pick.slice(-1)) {
                                     addText(pick + "(" + doumed + ")");
                                     lastWord = pick.slice(-1) + "(" +doumed + ")";
-                                    let data = advancedWord(pick.slice(-1),words)
+                                    let data = startsWithWord(pick.slice(-1),words)
                                     if (data.data.count == 0) {
                                         gameover = true
                                         botWin = true
                                     } else {
-                                        data = advancedWord(doumed,words)
+                                        data = startsWithWord(doumed,words)
                                         if (data.data.count == 0) {
                                             gameover = true
                                             botWin = true
@@ -309,7 +324,7 @@
                                 } else {
                                     addText(pick);
                                     lastWord = pick.slice(-1);
-                                    let data = advancedWord(lastWord,words)
+                                    let data = startsWithWord(lastWord,words)
                                     if (data.data.count == 0) {
                                         gameover = true
                                         botWin = true
@@ -367,6 +382,17 @@
             let result = {};
             $.ajax({
                 url: "/api/word/advanced?word=" + encodeURIComponent(str)+"&bans="+encodeURIComponent(bans.join(',')),
+                async: false,
+                success: function (data) {
+                    result = data;
+                }
+            })
+            return result;
+        }
+        startsWithWord = (str,bans) => {
+            let result = {};
+            $.ajax({
+                url: "/api/word/startsWith?word=" + encodeURIComponent(str)+"&bans="+encodeURIComponent(bans.join(',')),
                 async: false,
                 success: function (data) {
                     result = data;
