@@ -210,6 +210,11 @@
         data-ad-height  = "50"></ins> 
 <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
     <script>
+        let host = location.host.toLowerCase()
+        if(!host.startsWith("www")){
+            location.href = location.href.replace("://","://www.")
+        }
+
         let difficulty = location.href.includes("?difficulty=")?Number(location.href.split("difficulty=")[1]):30
         let words = [];
         let lastWord = "";
