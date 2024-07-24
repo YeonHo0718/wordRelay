@@ -31,6 +31,14 @@ app.get('/', function (req, res) {
 	res.sendFile(__dirname+'/routes/endWordGame.html');
 });
 
+app.get('/robots.txt', function (req, res) {
+	res.sendFile(__dirname+'/routes/robots.txt');
+});
+
+app.get('/sitemap.xml', function (req, res) {
+	res.sendFile(__dirname+'/routes/sitemap.xml');
+});
+
 app.listen(PORT, function() {
 	console.log('Express server has started on port '+PORT);
 });
